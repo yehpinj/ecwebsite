@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>南庄桂竹筍 - AI 轉型電商門戶</title>
+    <!-- 載入外部工具：Tailwind CSS (樣式), React (邏輯框架), Babel (編譯), Lucide (圖示) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* 自定義 CSS 樣式 */
+        body { font-family: 'Noto Sans TC', sans-serif; }
+        .bamboo-gradient { background: linear-gradient(135deg, #166534 0%, #3f6212 100%); }
+        .glass-morphism { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); }
+        .chat-scroll::-webkit-scrollbar { width: 4px; }
+        .chat-scroll::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+        @keyframes fade-in-up {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-up { animation: fade-in-up 0.6s ease-out forwards; }
+        .recipe-card:hover { transform: translateY(-5px); transition: all 0.3s ease; }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- 子組件：AI 食譜助手 ---
+        const RecipeAssistant = () => {
+            const [selectedIngredients, setSelectedIngredients] = useState([]);
+            const ingredients = ["五花肉", "排骨", "鹹蛋", "辣椒", "木耳", "雞肉"];
+            
+            const recipes = [
+                { name: "桂竹筍悶五花肉", tags: ["家常", "下飯"], time: "45min", match: ["五花肉"] },
+                { name: "清炒手撕桂竹筍", tags: ["清爽", "低卡"], time: "15min", match: ["辣椒", "木耳"] },
+                { name: "桂竹筍排骨湯", tags: ["湯品", "鮮甜"], time: "60min", match: ["排骨"] },
+                { name: "鹹蛋黃金桂竹筍", tags: ["熱炒", "濃郁"], time: "20min", match: ["鹹蛋"] }
+            ];
+
+            const toggleIngredient = (ing) => {
+                setSelectedIngredients(prev => 
+                    prev.includes(ing) ? prev.filter(i => i !== ing) : [...prev, ing]
+                );
+            };
+
+            return (
+                <div className="animate-up">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl font-bold text-green-900 mb-4">AI 智慧食譜助手</h2>
+                        <p className="text-stone-500">點選您現有的食材，AI 將為您推薦最適合的桂竹筍料理方案</p>
+                    </div>
+
+                    <div className="flex flex-wrap justify-center gap-3 mb-12">
+                        {ingredients.map(ing => (
+                            <button 
+                                key={ing}
+                                onClick={() => toggleIngredient(ing)}
+                                className={`px-6 py-2 rounded-full border transition-all ${selectedIngredients.includes(ing) ? 'bg-green-800 text-white border-green-800' : 'bg-white text-stone-600 border-stone-200 hover:border-green-800'}`}
+                            >
+                                {ing}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {recipes.map((r, i) => {
+                            const isMatch = r.match.some(m => selectedIngredients.includes(m));
+                            return (
+                                <div key={i} className={`recipe-card bg-white p-6 rounded-[2rem] border transition-all shadow-sm ${isMatch ? 'border-green-500 ring-2 ring-green-100' : 'border-stone-100 opacity-80'}`}>
+                                    <div className="flex gap-2 mb-4">
+                                        {r.tags.map(t => <span key={t} className="text-[10px] bg-green-50 text-green-700 px-2 py-1 rounded-full font-bold">{t}</span>)}
+                                    </div>
+                                    <h3 className="font-bold text-lg mb-2 text-stone-800">{r.name}</h3>
+                                    <div className="flex items-center text-stone-400 text-xs mt-4">
+                                        <span className="flex items-center gap-1"><i data-lucide="clock" className="w-3"></i> {r.time}</span>
+                                        <span className="mx-2">|</span>
+                                        <span className="text-green-600 font-medium">{isMatch ? "食材精準契合" : "建議搭配購買"}</span>
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 主程式組件 ---
+        const App = () => {
+            const [activeTab, setActiveTab] = useState('home');
+            const [isChatOpen, setIsChatOpen] = useState(false);
+            const [timeLeft, setTimeLeft] = useState({ days: 15, hours: 8, mins: 42, secs: 0 });
+            const [messages, setMessages] = useState([
+                { role: 'ai', text: '您好！我是南庄 AI 助理。今年的桂竹筍生長狀況極佳，有什麼我可以幫您的嗎？' }
+            ]);
+            const [input, setInput] = useState('');
+            const chatEndRef = useRef(null);
+
+            // 倒數計時邏輯
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setTimeLeft(prev => {
+                        if (prev.secs > 0) return { ...prev, secs: prev.secs - 1 };
+                        if (prev.mins > 0) return { ...prev, mins: prev.mins - 1, secs: 59 };
+                        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, mins: 59, secs: 59 };
+                        return { ...prev, days: prev.days - 1, hours: 23, mins: 59, secs: 59 };
+                    });
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            // 監聽並重載 Lucide 圖示
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [activeTab, isChatOpen, messages]);
+
+            // 處理聊天自動捲動
+            useEffect(() => {
+                chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }, [messages, isChatOpen]);
+
+            const handleSend = () => {
+                if (!input.trim()) return;
+                const userMsg = { role: 'user', text: input };
+                setMessages(prev => [...prev, userMsg]);
+                setInput('');
+
+                setTimeout(() => {
+                    let response = "這是一個關於南庄桂竹筍的好問題！我們的產品採自海拔 700m 以上。";
+                    if (input.includes('價格')) response = "目前特級鮮筍 3kg 裝預購價為 $450 元。";
+                    if (input.includes('保存')) response = "真空包裝建議存放於陰涼處，可保鮮一年；拆封後請務必冷藏。";
+                    if (input.includes('食譜')) response = "您可以點擊導覽列的「AI 食譜助手」，我會根據您的食材給予建議！";
+                    
+                    setMessages(prev => [...prev, { role: 'ai', text: response }]);
+                }, 800);
+            };
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    {/* 導覽列 */}
+                    <nav className="glass-morphism sticky top-0 z-50 px-6 py-4 shadow-sm">
+                        <div className="max-w-7xl mx-auto flex justify-between items-center">
+                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => setActiveTab('home')}>
+                                <div className="bg-green-800 text-white w-10 h-10 rounded-lg flex items-center justify-center font-bold">南</div>
+                                <span className="text-xl font-bold text-green-900 tracking-tight">南庄桂竹筍</span>
+                            </div>
+                            <div className="hidden md:flex gap-8 font-medium">
+                                {['home', 'shop', 'ai-recipe'].map(t => (
+                                    <button 
+                                        key={t}
+                                        onClick={() => setActiveTab(t)}
+                                        className={`transition-colors ${activeTab === t ? 'text-green-800 border-b-2 border-green-800' : 'text-stone-500 hover:text-green-700'}`}
+                                    >
+                                        {t === 'home' ? '品牌首頁' : t === 'shop' ? '線上商城' : 'AI 食譜助手'}
+                                    </button>
+                                ))}
+                            </div>
+                            <button className="bg-green-800 text-white px-6 py-2 rounded-full text-sm font-bold hover:bg-green-700 transition shadow-lg hover:shadow-green-900/20">快速購買</button>
+                        </div>
+                    </nav>
+
+                    {/* 英雄區 (Hero Section) */}
+                    <header className="bamboo-gradient text-white py-20 px-6 relative overflow-hidden">
+                        <div className="max-w-4xl mx-auto text-center relative z-10 animate-up">
+                            <h1 className="text-5xl md:text-6xl font-extrabold mb-6">高山靈魂，鮮甜滋味</h1>
+                            <p className="text-lg text-white/80 mb-10">結合傳統採筍工法與 AI 數據監測，為您鎖定 2026 產季最完美的熟成瞬間。</p>
+                            <div className="bg-black/20 backdrop-blur-md inline-block px-10 py-6 rounded-[2rem] border border-white/10 shadow-2xl">
+                                <p className="text-xs uppercase tracking-widest text-yellow-400 font-bold mb-2">距離產季盛產還有</p>
+                                <div className="text-3xl md:text-4xl font-black font-mono">
+                                    {String(timeLeft.days).padStart(2, '0')} 天 : {String(timeLeft.hours).padStart(2, '0')} 小時 : {String(timeLeft.mins).padStart(2, '0')} 分 : {String(timeLeft.secs).padStart(2, '0')} 秒
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* 動態內容切換區 */}
+                    <main className="flex-grow max-w-7xl mx-auto w-full px-6 py-16">
+                        {activeTab === 'home' && (
+                            <div className="grid md:grid-cols-2 gap-12 items-center animate-up">
+                                <div>
+                                    <h2 className="text-4xl font-bold text-green-900 mb-6 tracking-tight">海拔 700m 的純淨守護</h2>
+                                    <p className="text-stone-600 leading-relaxed mb-8 text-lg">
+                                        南庄桂竹筍生長在苗栗偏遠的高山部落，這裡的土壤肥沃、日夜溫差大。我們利用 AI 技術監測山區雨量與濕度，精準判斷最佳採收期，確保每一口都脆嫩如初。
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="border-l-4 border-green-700 pl-4 bg-white p-4 rounded-r-xl shadow-sm">
+                                            <div className="text-2xl font-bold text-green-900">100%</div>
+                                            <div className="text-xs text-stone-400 uppercase font-bold">天然無添加</div>
+                                        </div>
+                                        <div className="border-l-4 border-green-700 pl-4 bg-white p-4 rounded-r-xl shadow-sm">
+                                            <div className="text-2xl font-bold text-green-900">海拔 700m+</div>
+                                            <div className="text-xs text-stone-400 uppercase font-bold">純淨高山</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="rounded-[2.5rem] overflow-hidden shadow-2xl ring-8 ring-white">
+                                    <img src="https://images.unsplash.com/photo-1599420186946-7b6fb4e297f0?auto=format&fit=crop&q=80&w=800" alt="[南庄高山竹林]" className="w-full h-full object-cover aspect-video" />
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'shop' && (
+                            <div className="animate-up">
+                                <h2 className="text-3xl font-bold text-center mb-12 text-green-900">智慧分級選購</h2>
+                                <div className="grid md:grid-cols-3 gap-8">
+                                    {[
+                                        { title: "特級鮮筍 (3kg)", price: 450, tag: "鮮採限定", img: "https://images.unsplash.com/photo-1591871937573-74dbba515c4c?auto=format&fit=crop&q=80&w=400" },
+                                        { title: "真空熟筍經濟包", price: 1280, tag: "熱銷推薦", img: "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&q=80&w=400" },
+                                        { title: "原民古法筍乾", price: 220, tag: "傳統工藝", img: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=400" }
+                                    ].map((item, idx) => (
+                                        <div key={idx} className="bg-white rounded-[2rem] border border-stone-200 overflow-hidden hover:shadow-xl transition-all group">
+                                            <div className="h-48 bg-stone-100 relative overflow-hidden">
+                                                <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                                                <span className="absolute top-4 left-4 bg-green-800 text-white text-[10px] px-3 py-1 rounded-full font-bold shadow-lg">{item.tag}</span>
+                                            </div>
+                                            <div className="p-6">
+                                                <h4 className="font-bold text-lg mb-2 text-stone-800">{item.title}</h4>
+                                                <div className="flex justify-between items-center mt-6">
+                                                    <span className="text-2xl font-black text-green-900">$ {item.price}</span>
+                                                    <button className="bg-stone-900 text-white w-12 h-12 rounded-full flex items-center justify-center hover:bg-green-800 transition-colors shadow-lg"><i data-lucide="shopping-cart" className="w-5"></i></button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {activeTab === 'ai-recipe' && <RecipeAssistant />}
+                    </main>
+
+                    {/* 頁尾 */}
+                    <footer className="bg-stone-100 border-t py-12 px-6">
+                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className="flex items-center gap-2">
+                                <div className="bg-stone-300 text-white w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm">南</div>
+                                <span className="font-bold text-stone-500">南庄鄉農會</span>
+                            </div>
+                            <p className="text-stone-400 text-xs font-bold uppercase tracking-widest text-center">© 2026 AI 智慧產銷轉型計劃 · 守護每一口鮮甜</p>
+                            <div className="flex gap-4">
+                                <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-500 cursor-pointer hover:bg-green-800 hover:text-white transition-all"><i data-lucide="facebook" className="w-4"></i></div>
+                                <div className="w-8 h-8 rounded-full bg-stone-200 flex items-center justify-center text-stone-500 cursor-pointer hover:bg-green-800 hover:text-white transition-all"><i data-lucide="instagram" className="w-4"></i></div>
+                            </div>
+                        </div>
+                    </footer>
+
+                    {/* AI 聊天視窗 */}
+                    <div className="fixed bottom-6 right-6 z-50">
+                        {isChatOpen ? (
+                            <div className="w-[20rem] h-[28rem] bg-white rounded-3xl shadow-2xl border border-stone-200 flex flex-col animate-up overflow-hidden ring-4 ring-black/5">
+                                <div className="bg-green-800 p-4 text-white flex justify-between items-center shadow-md">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                                        <span className="font-bold text-sm">南庄 AI 助理</span>
+                                    </div>
+                                    <button onClick={() => setIsChatOpen(false)} className="hover:rotate-90 transition-transform"><i data-lucide="x" className="w-4"></i></button>
+                                </div>
+                                <div className="flex-grow p-4 space-y-4 overflow-y-auto chat-scroll bg-stone-50/50">
+                                    {messages.map((m, i) => (
+                                        <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                                            <div className={`max-w-[85%] px-4 py-3 rounded-2xl text-xs leading-relaxed shadow-sm ${m.role === 'user' ? 'bg-green-800 text-white rounded-tr-none' : 'bg-white border text-stone-700 rounded-tl-none'}`}>
+                                                {m.text}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div ref={chatEndRef} />
+                                </div>
+                                <div className="p-3 bg-white border-t flex gap-2">
+                                    <input 
+                                        type="text" 
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                                        placeholder="詢問關於桂竹筍或食譜..." 
+                                        className="flex-grow bg-stone-100 rounded-xl px-4 py-2 text-xs outline-none focus:ring-2 focus:ring-green-800/20 transition-all"
+                                    />
+                                    <button onClick={handleSend} className="bg-green-800 text-white w-9 h-9 rounded-xl flex items-center justify-center hover:bg-green-700 shadow-md active:scale-95 transition-all"><i data-lucide="send" className="w-4"></i></button>
+                                </div>
+                            </div>
+                        ) : (
+                            <button 
+                                onClick={() => setIsChatOpen(true)}
+                                className="w-14 h-14 bg-green-800 text-white rounded-2xl shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all animate-bounce"
+                            >
+                                <i data-lucide="message-square" className="w-7"></i>
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
