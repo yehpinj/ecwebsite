@@ -97,6 +97,21 @@
             const [isChatOpen, setIsChatOpen] = useState(false);
             const [messages, setMessages] = useState([{ role: 'ai', text: '您好，我是南庄山間助理。今日山區霧氣濃郁，桂竹筍生長狀態良好。' }]);
             const [input, setInput] = useState('');
+            const [timeLeft, setTimeLeft] = useState({ days: 15, hours: 8, mins: 42, secs: 0 });
+
+            // 倒數計時邏輯
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setTimeLeft(prev => {
+                        if (prev.secs > 0) return { ...prev, secs: prev.secs - 1 };
+                        if (prev.mins > 0) return { ...prev, mins: prev.mins - 1, secs: 59 };
+                        if (prev.hours > 0) return { ...prev, hours: prev.hours - 1, mins: 59, secs: 59 };
+                        if (prev.days > 0) return { ...prev, days: prev.days - 1, hours: 23, mins: 59, secs: 59 };
+                        return prev;
+                    });
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
 
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
@@ -129,18 +144,45 @@
                         </div>
                     </nav>
 
-                    {/* 主視覺區 (Hero) */}
-                    <header className="moss-gradient text-stone-100 py-32 px-6 text-center relative overflow-hidden">
+                    {/* 主視覺區 (Hero) - 已加入倒數計時 */}
+                    <header className="moss-gradient text-stone-100 py-24 md:py-32 px-6 text-center relative overflow-hidden">
                         <div className="absolute inset-0 opacity-20 bg-[url('https://www.transparenttextures.com/patterns/pinstriped-suit.png')]"></div>
                         <div className="max-w-4xl mx-auto relative z-10 animate-up">
                             <h1 className="text-5xl md:text-7xl font-black mb-10 leading-tight tracking-tight">清晨雲霧，<br/>封存於筍尖。</h1>
                             <p className="text-lg md:text-xl text-stone-300 mb-12 max-w-2xl mx-auto leading-relaxed font-light">
                                 南庄海拔 700 公尺，日夜溫差交織出最細緻的纖維。我們將這份來自大山的靜謐，完整地送抵您的餐桌。
                             </p>
-                            <div className="inline-flex items-center gap-4 text-xs tracking-[0.4em] uppercase text-stone-400">
-                                <span>產季預備中</span>
+                            
+                            {/* 倒數計時器容器 */}
+                            <div className="bg-white/5 backdrop-blur-xl inline-block px-10 py-8 rounded-[2rem] border border-white/10 shadow-2xl mb-12">
+                                <p className="text-[10px] uppercase tracking-[0.4em] text-stone-400 font-bold mb-6">距離 2026 產季盛大展開</p>
+                                <div className="text-3xl md:text-4xl font-bold flex gap-4 md:gap-8 justify-center items-baseline">
+                                    <div className="flex flex-col">
+                                        <span>{String(timeLeft.days).padStart(2, '0')}</span>
+                                        <span className="text-[10px] opacity-40 font-normal tracking-widest mt-1">DAYS</span>
+                                    </div>
+                                    <span className="opacity-20 text-xl">:</span>
+                                    <div className="flex flex-col">
+                                        <span>{String(timeLeft.hours).padStart(2, '0')}</span>
+                                        <span className="text-[10px] opacity-40 font-normal tracking-widest mt-1">HRS</span>
+                                    </div>
+                                    <span className="opacity-20 text-xl">:</span>
+                                    <div className="flex flex-col">
+                                        <span>{String(timeLeft.mins).padStart(2, '0')}</span>
+                                        <span className="text-[10px] opacity-40 font-normal tracking-widest mt-1">MINS</span>
+                                    </div>
+                                    <span className="opacity-20 text-xl">:</span>
+                                    <div className="flex flex-col text-emerald-300">
+                                        <span>{String(timeLeft.secs).padStart(2, '0')}</span>
+                                        <span className="text-[10px] opacity-40 font-normal tracking-widest mt-1">SECS</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-center gap-4 text-xs tracking-[0.4em] uppercase text-stone-500">
                                 <span className="w-8 h-[1px] bg-stone-500"></span>
                                 <span>2026 春季發貨</span>
+                                <span className="w-8 h-[1px] bg-stone-500"></span>
                             </div>
                         </div>
                     </header>
